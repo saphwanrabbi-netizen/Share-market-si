@@ -1,3 +1,49 @@
+# ============================================================
+# Caching যোগ করা — এতে dashboard অনেক দ্রুত হবে
+# @st.cache_data = ডেটা মনে রাখে, আবার নামাতে হয় না
+# @st.cache_resource = মডেল object মনে রাখে
+# ============================================================
+
+@st.cache_data(ttl=3600, show_spinner=False)   # ১ ঘণ্টা ডেটা মনে রাখবে
+def load_prepared_data(ticker, start):
+    """ডেটা নামিয়ে indicator + target বানায়, ফলাফল cache করে।"""
+    df = download_price_data(ticker, start=start)
+    df = add_indicators(df)
+    df = add_target(df)
+    return df
+
+
+@st.cache_resource(show_spinner=False)         # মডেল একবারই বানাবে
+def train_model_cached(ticker, start, test_ratio, n_estimators=300):
+    """ডেটা + মডেল দুটোই cache করে, তাই আবার চাপলে instant আসবে।"""
+    df = load_prepared_data(ticker, start)
+    X = df[FEATURES].values
+    y = df["target"].values
+
+    split_idx = int(len(X) * (1 - test_ratio))
+    X_train, y_train = X[:split_idx], y[:split_idx]
+    X_test, y_test = X[split_idx:], y[split_idx:]
+
+    model = RandomForestClassifier(
+        n_estimators=n_estimators,   # কমালে দ্রুত হবে
+        max_depth=6,
+        min_samples_leaf=20,
+        random_state=42,
+        n_jobs=-1,
+    )
+    model.fit(X_train, y_train)
+    return model, df, split_idx, X_test, y_test
+    # আগের তিন লাইনের বদলে শুধু এই একটা লাইন
+    model, df, split_idx, X_test, y_test = train_model_cached(
+        ticker, start, test_ratio, n_estimators=150
+    )
+
+    y_pred = model.predict(X_test)
+# sidebar-এ একটা ছবি দেখাতে
+st.sidebar.image("logo.png", width=150)
+
+# অথবা URL থেকে ছবি
+st.sidebar.image("[example.com](https://example.com/chart.png)")
 
 import yfinance as yf
 import pandas as pd
