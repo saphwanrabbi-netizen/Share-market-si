@@ -1,3 +1,0 @@
-lumns(4)
-            b1.metric("Strategy return", f'{bt["strategy_return"] * 100:.2f}%')
-            b2.metric("Buy & Hold return", f'{bt["buyhold_return"] ন্টারনেট সংযোগ দেখুন। যেমন: AAPL,BINANCE TSLA, RELIANCE.NS")
